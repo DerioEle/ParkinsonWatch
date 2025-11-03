@@ -1,5 +1,6 @@
 #include "tremor.h"
 #include <arduinoFFT.h>   // com 'a' minúsculo, compatível com maioria das versões
+#include <bluetooth/bluetooth_service.h>
 
 static const size_t N_SAMPLES = 128;       // ~1.28 s a 100 Hz
 static double vReal[N_SAMPLES];
@@ -20,7 +21,6 @@ void tremorAddSample(float mag) {
 void tremorProcess(TTGOClass *watch, float sampleRate) {
     if (!bufferFull) return;
 
-    // 🔧 Classe usada em versões mais antigas da lib
     arduinoFFT FFT(vReal, vImag, N_SAMPLES, sampleRate);
     FFT.Windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
     FFT.Compute(FFT_FORWARD);
@@ -37,6 +37,9 @@ void tremorProcess(TTGOClass *watch, float sampleRate) {
     double ratio = (bandEnergy / (totalEnergy + 1e-9));
     bool tremorDetected = (ratio > 0.30);
 
+    // --- BLE envio JSON ---
+    bleSendData(vReal[0], tremorDetected);
+
     if (tremorDetected) {
         Serial.printf("[TREMOR] Detectado! Energia 4–6Hz = %.2f%%\n", ratio * 100);
         if (watch && watch->tft) {
@@ -44,7 +47,7 @@ void tremorProcess(TTGOClass *watch, float sampleRate) {
             watch->tft->setTextColor(TFT_WHITE, TFT_RED);
             watch->tft->setTextSize(2);
             watch->tft->setCursor(10, 60);
-            watch->tft->println("⚠ Tremor Detectado");
+            watch->tft->println("Tremor Detectado");
             delay(1000);
             watch->tft->fillScreen(TFT_BLACK);
         }

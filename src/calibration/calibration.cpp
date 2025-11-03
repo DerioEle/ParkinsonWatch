@@ -1,6 +1,7 @@
 #include "calibration.h"
 #include "utils/utils.h"
 #include <Wire.h>
+#include <imu/imu.h>
 #include <Preferences.h>
 #define BTN_PIN 36  // GPIO36 = botão lateral
 
@@ -73,13 +74,29 @@ void calibrateBMA423(AccelCalibration &calib) {
 
     calib.offsetX = sumX / samples;
     calib.offsetY = sumY / samples;
-    calib.offsetZ = (sumZ / samples) - 1.0f; // remove gravidade
+    calib.offsetZ = (sumZ / samples);
     calib.valid = true;
 
     Serial.printf("[CAL] OffsetX=%.4f, OffsetY=%.4f, OffsetZ=%.4f\n",
                   calib.offsetX, calib.offsetY, calib.offsetZ);
     Serial.println("[CAL] Calibração concluída!");
     saveCalibrationToNVS(calib);
+    // Reconfigura o BMA423 após calibração
+    if (::bma423_init()) {
+        Serial.println("[CAL] BMA423 reconfigurado com sucesso após calibração.");
+    } else {
+        Serial.println("[CAL] Erro ao reconfigurar o BMA423 após calibração!");
+    }
+    // Teste de leitura do sensor após reconfiguração
+    delay(100);
+    uint8_t testBuf[6];
+    if (i2cReadBytes(BMA_ADDR, BMA_DATA_START, testBuf, 6)) {
+        Serial.printf("[TEST] Dados após calibração: %02X %02X %02X %02X %02X %02X\n",
+                    testBuf[0], testBuf[1], testBuf[2],
+                    testBuf[3], testBuf[4], testBuf[5]);
+    } else {
+        Serial.println("[TEST] Falha na leitura do BMA423 após calibração!");
+    }
 }
 
 void applyCalibration(float &ax, float &ay, float &az, const AccelCalibration &calib) {
@@ -135,6 +152,8 @@ void handleRecalibration(TTGOClass *watch, AccelCalibration &calib) {
             }
 
             calibrateBMA423(calib);
+            extern void resetFilters();  // declaração da função
+            resetFilters();
 
             if (watch->tft) {
                 watch->tft->fillScreen(TFT_BLACK);
