@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <LilyGoWatch.h>
 #include "calibration/calibration.h"
+#include "interface/interface_display.h"
 
 extern TTGOClass *watch;
 extern AccelCalibration calib;

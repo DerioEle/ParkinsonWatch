@@ -1,5 +1,9 @@
 #pragma once
 #include <Arduino.h>
+#include <NimBLEDevice.h>
+#include <LilyGoWatch.h>
 
 void bleSetup();
-void bleSendData(float mag, bool tremorDetected);
+void bleSendData(TTGOClass *watch, float mag, float freq, bool tremorDetected);
+extern NimBLEServer *g_bleServer;
+extern bool g_bleConnected;
