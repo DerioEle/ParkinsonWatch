@@ -1,6 +1,8 @@
 #include "system/system_init.h"
 #include "system/system_loop.h"
 #include "interface/interface_display.h"
+#include "network/http_service.h"
+
 
 bool useFakeData = false;
 
@@ -20,6 +22,8 @@ void setup() {
         }
     }
     startBLE();
+    wifiSetup("Derio_2.G", "derio1234");  // conecte ao Wi-Fi
+
 }
 
 void loop() {

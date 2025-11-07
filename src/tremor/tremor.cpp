@@ -60,6 +60,11 @@ void tremorProcess(TTGOClass *watch, float sampleRate) {
 
     // Envio BLE com freq
     bleSendData(watch, (float)avgMag, (float)peakFreq, tremorDetected);
+    extern void httpSendData(uint32_t timestamp, float mag, float freq, int battPercent, bool tremorDetected);
+
+    uint32_t timestamp = millis();
+    int battPercent = watch->power->getBattPercentage();
+    httpSendData(timestamp, (float)avgMag, (float)peakFreq, battPercent, tremorDetected);
 
     if (tremorDetected) {
         Serial.printf("[TREMOR] Detectado! Energia 4–6Hz = %.2f%% | Freq = %.2f Hz\n",
